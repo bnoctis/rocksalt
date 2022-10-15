@@ -1,0 +1,239 @@
+= rocksalt
+
+image:https://img.shields.io/npm/v/rocksalt?style=for-the-badge[npm, link=https://npmjs.com/package/rocksalt]
+
+A higher level abstraction of https://github.com/jedisct1/libsodium.js:[libsodium.js],
+written in TypeScript.
+
+== Usage
+
+The functions and their associated types are pretty self-explanatory.
+See the table below for available functions, and `./lib.ts` for details.
+
+Any output that may be binary and input that must be binary is converted to
+and is required to be a `https://npmjs.com/package/buffer[Buffer]`.
+Use `buf.toString('hex' | 'base64')` to turn it into an encoded string, or
+`buf.toString()` if you are sure it's a human readable string.
+
+== Implementation status
+
+[cols="4a,4a,1a,6a,6a,4a"]
+|====
+2+|Category |Impl? |Function in libsodium |Function in rocksalt |Notes
+
+2.6+|https://doc.libsodium.org/generating_random_data[Random data generation]
+|✅
+|`randombytes_random()`
+|`random()`
+|
+
+
+|✅ 
+|`randombytes_uniform()` 
+|`randomUniform()` 
+|
+
+|✅ 
+|`randombytes_buf()` 
+|`randomBytes()`
+|
+
+|❌ 
+|`randombytes_buf_deterministic()` 
+| 
+|
+
+|❌ 
+|`randombytes_stir()` 
+| 
+|
+
+|
+|
+|`generateNonce('symmetric' \| 'publickey')`
+|
+
+.7+|Secret-key (symmetric) cryptography
+
+Also read: https://doc.libsodium.org/secret-key_cryptography/encrypted-messages[encrypting related messages]
+.5+|https://doc.libsodium.org/secret-key_cryptography/secretbox[secretbox] (authenticated encryption)
+|✅
+|`crypto_secretbox_keygen()` 
+|`generateKey()` 
+|
+
+|✅
+|`crypto_secretbox_easy()` 
+|
+`encrypt({ ... }: EncryptParams)` 
+
+- `encrypt({ ..., password })` 
+- `encrypt({ ..., key })` 
+|
+
+|✅ 
+|`crypto_secretbox_detached()` 
+|`encrypt({ ..., detached: true })` 
+|
+
+|✅ 
+|`crypto_secretbox_open_easy()` 
+|
+`decrypt({ ... }: DecryptParams)` 
+
+- `decrypt({ ..., password })` 
+- `decrypt({ ..., key })` 
+|
+
+|✅ 
+|`crypto_secretbox_open_detached()` 
+|`decrypt({ ..., sig })` 
+|
+
+|https://doc.libsodium.org/secret-key_cryptography/secretstream[secretstream] (stream encryption)
+|❌
+|`crypto_secretstream_*()`
+2+|
+
+
+|https://doc.libsodium.org/secret-key_cryptography/secret-key_authentication[Authentication]
+|❌
+|`crypto_auth_*()`
+2+|
+
+.17+|Public-key cryptograhy
+.6+|https://doc.libsodium.org/public-key_cryptography/authenticated_encryption[box] (authenticated encryption)
+|✅
+|`crypto_box_keypair()`
+|`KeyPair.generateEncryption()`
+|
+
+|✅
+|`crypto_box_easy()`
+|`encrypt({ ..., sender, recipient })`
+|
+
+|✅
+|`crypto_box_detached()`
+|`encrypt({ ..., sender, recipient, detached: true })`
+|
+
+|✅
+|`crypto_box_open_easy()`
+|`decrypt({ ..., sender, recipient })`
+|
+
+|✅
+|`crypto_box_open_detached()`
+|`decrypt({ ..., sender, recipient, detached: true })`
+|
+
+|❌
+|`crypto_box_*_afternm()`
+2+|Precalculate and use precalculated shared key
+
+.9+|https://doc.libsodium.org/public-key_cryptography/public-key_signatures[Signatures]
+|✅
+|`crypto_sign_keypair()`
+|`KeyPair.generateSigning()`
+|
+
+|✅
+|`crypto_sign()`
+|`sign({ ... }: SignParams)`
+|
+
+|✅
+|`crypto_sign_detached()`
+|`sign({ ..., detached: true})`
+|
+
+|✅
+|`crypto_sign_open()`
+|`verify({ ... }: VerifyParams)`
+|Returns original message
+
+|✅
+|`crypto_sign_verify_detached()`
+|`verify({ ..., detached: true})`
+|
+
+|✅
+|`crypto_sign_init()`
+.4+|
+[source,javascript]
+----
+mpsign()
+	.update('hello, ')
+	.update('world')
+	.sign(keyPair)
+	// or
+	.verify(keyPair \| key)
+----
+.4+|
+
+|✅
+|`crypto_sign_update()`
+
+|✅
+|`crypto_sign_final_create()`
+
+|✅
+|`crypto_sign_final_verify()`
+
+.2+|https://doc.libsodium.org/public-key_cryptography/sealed_boxes[sealed box] (anonymous sending)
+|✅
+|`crypto_box_seal()`
+|`seal({ ... }: SealParams)`
+|
+
+|✅
+|`crypto_box_seal_open()`
+|`openSeal({ ... }: OpenSealParams)`
+|
+
+2.3+|https://doc.libsodium.org/password_hashing[Password hashing]
+|✅
+|`crypto_pwhash()`
+|`pwhash({ ..., stored: false })`
+|
+
+|✅
+|`crypto_pwhash_str()`
+|`pwhash({ ... }: PwhashParams)`
+|
+
+|✅
+|`crypto_pwhash_str_verify()`
+|`pwhashVerify({ hashed, password })`
+|
+
+2+|https://doc.libsodium.org/hashing/generic_hashing[Generic hashing] & https://doc.libsodium.org/hashing/short-input_hashing[Short-input hashing]
+|❌
+3+|
+
+2+|https://doc.libsodium.org/key_derivation[Key derivation]
+|❌
+3+|
+
+2+|https://doc.libsodium.org/key_exchange[Key exchange]
+|❌
+3+|
+
+2+|https://doc.libsodium.org/memory_management[Secure memory]
+|❌
+3+|
+
+2+|https://doc.libsodium.org/padding[Padding]
+|❌
+3+|
+
+2+|https://doc.libsodium.org/helpers[Helpers]
+|❌
+3+|
+
+|====
+
+== License
+
+BSD 3-clause (c) Blair Noctis.
