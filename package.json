@@ -1,6 +1,6 @@
 {
 	"name": "rocksalt",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "higher level abstraction of libsodium.js written in TypeScript",
 	"author": "Blair Noctis <n@sail.ng>",
 	"license": "BSD-3-Clause",
@@ -13,6 +13,7 @@
 	],
 	"homepage": "https://github.com/bnoctis/rocksalt",
 	"main": "lib.ts",
+	"module": "lib.ts",
 	"scripts": {
 		"build": "tsc --build",
 		"clean": "tsc --build --clean",
